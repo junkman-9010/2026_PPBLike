@@ -5,7 +5,7 @@ import "image/color"
 const (
 	ScreenWidth  = 1280
 	ScreenHeight = 720
-	HexRadius    = 40
+	HexRadius    = 80
 )
 
 type Scene int
@@ -46,5 +46,5 @@ var terrainStats = map[TerrainType]TerrainStats{
 	Plains:     {1, 1},
 	DeepForest: {2, 2},
 	Desert:     {1, 1},
-	Mountain:   {99, 3},
+	Mountain:   {99, 2},
 }

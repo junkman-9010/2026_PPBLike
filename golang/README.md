@@ -5,12 +5,14 @@ GoLang을 이용해서 만드는 중.
 
 Gemini와 자체 GPT-OSS:20을 이용해서 만드는 중.
 
+# 추가 라이브러리가 있을시
+go mod vendor
+
 # 실행 시
 go run -mod=vendor .
 
 # 빌드 시 (exe 파일 생성)
 go build -mod=vendor -o pixel_game.exe .
-
 
 # 해야할일.
 todo

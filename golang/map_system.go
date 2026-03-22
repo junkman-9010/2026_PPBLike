@@ -1,13 +1,27 @@
+/**
+ * @file map_system.go
+ * @brief 헥사곤 맵의 시스템 로직(생성, 시야, 이동 계산, 카메라)을 구현합니다.
+ */
+ 
 package main
 
 import (
 	"fmt"
-	"math" // <-- 이게 없으면 추가하세요!
+	
+	"math"
 	"math/rand"
+	
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/ojrac/opensimplex-go"
 )
 
+/**
+ * @fn NewHexMap
+ * @brief 새로운 헥사곤 맵 인스턴스를 생성하고 초기화합니다.
+ * @param w 맵의 가로 너비 (타일 수)
+ * @param h 맵의 세로 높이 (타일 수)
+ * @return 초기화된 HexMap 구조체 포인터
+ */
 func NewHexMap(w, h int) *HexMap {
 	m := &HexMap{
 		width:          w,
@@ -30,7 +44,11 @@ func NewHexMap(w, h int) *HexMap {
 	return m
 }
 
-// 1. game_logic.go 오류 해결: 플레이어 이동 로직
+/**
+ * @fn MovePlayerToSelected
+ * @brief 현재 선택된 타일로 플레이어를 이동시키고 턴을 소모합니다.
+ * @details 이동 후 시야 업데이트 및 몬스터 AI를 실행합니다.
+ */
 func (m *HexMap) MovePlayerToSelected() {
 	key := fmt.Sprintf("%d,%d", m.selectedQ, m.selectedR)
 	if _, ok := m.reachableTiles[key]; ok {
@@ -45,7 +63,10 @@ func (m *HexMap) MovePlayerToSelected() {
 	}
 }
 
-// 2. map_system.go 초기화 오류 해결: 몬스터 스폰
+/**
+ * @fn SpawnMonsters
+ * @brief 맵 내에 바다가 아닌 안전한 스폰 지점을 찾아 플레이어를 배치합니다.
+ */
 func (m *HexMap) SpawnMonsters(count int) {
 	for i := 0; i < count; i++ {
 		mq, mr := rand.Intn(m.width), rand.Intn(m.height)
@@ -55,7 +76,6 @@ func (m *HexMap) SpawnMonsters(count int) {
 	}
 }
 
-// 3. monster.go 오류 해결: 이동 가능 확인 및 시야 계산
 func (m *HexMap) CanMoveMonster(mon *Monster, q, r int) bool {
 	if q < 0 || q >= m.width || r < 0 || r >= m.height { return false }
 	return m.tiles[r][q].Terrain != Ocean && m.tiles[r][q].Terrain != Mountain
@@ -70,8 +90,11 @@ func (m *HexMap) CalculateMonsterVision(mon *Monster) map[string]bool {
 	return v
 }
 
-// 4. ui_header.go 오류 해결: 시간 정보 제공
-// map_system.go 파일에서 해당 함수를 찾아서 수정
+/**
+ * @fn GetTimeContext
+ * @brief 현재 턴 수에 따른 시간 단계(Step)와 시간(Hour)을 반환합니다.
+ * @return timeStep 시간 단계 (0:아침, 1:오후, 2:저녁, 3:밤), hour 24시간제 시간
+ */
 func (m *HexMap) GetTimeContext() (int, int) { // 반환 타입을 (int, int)로 설정
     hour := (m.TurnCount / 6) % 24
     
@@ -184,6 +207,11 @@ func (m *HexMap) GetNeighbors(q, r int) [][2]int {
 	return neighbors
 }
 
+
+/**
+ * @fn CenterCameraOnPlayer
+ * @brief 카메라의 초점을 플레이어 캐릭터의 중앙으로 이동시킵니다.
+ */
 func (m *HexMap) CenterCameraOnPlayer() {
 	spacingX := float32(HexRadius) * 1.5
 	spacingY := float32(HexRadius) * 1.73205
@@ -219,7 +247,13 @@ func (m *HexMap) UpdateCamera() {
 	} else { m.isDragging = false }
 }
 
-// ScreenToTile: 화면 좌표를 헥사곤 좌표(q, r)로 변환합니다.
+/**
+ * @fn ScreenToTile
+ * @brief 화면의 픽셀 좌표를 헥사곤 그리드 좌표(Q, R)로 변환합니다.
+ * @param x 화면 X 좌표
+ * @param y 화면 Y 좌표
+ * @return q 헥사곤 열 좌표, r 헥사곤 행 좌표
+ */
 func (m *HexMap) ScreenToTile(x, y float32) (int, int) {
 	// 카메라 오프셋 보정
 	worldX := x - m.offsetX
@@ -246,7 +280,10 @@ func (m *HexMap) ScreenToTile(x, y float32) (int, int) {
 	return q, r
 }
 
-// findSafeSpawnPoint: 플레이어가 바다에 빠지지 않도록 육지를 찾아 배치합니다.
+/**
+ * @fn findSafeSpawnPoint
+ * @brief 맵 내에 바다가 아닌 안전한 스폰 지점을 찾아 플레이어를 배치합니다.
+ */
 func (m *HexMap) findSafeSpawnPoint() {
 	// 맵의 중앙부부터 탐색하여 가장 먼저 발견되는 육지(바다가 아닌 곳)에 배치
 	for r := 0; r < m.height; r++ {

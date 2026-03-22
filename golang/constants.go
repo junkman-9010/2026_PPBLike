@@ -15,6 +15,11 @@ const (
 	SceneOption
 )
 
+const (
+	ModeNormal = iota
+	ModeView
+)
+
 // map.go에서 이쪽으로 이동하여 통합 관리
 type TerrainType int
 const (

@@ -9,6 +9,7 @@ import (
 
 type Game struct {
 	currentScene Scene
+	currentMode  int // 추가: ModeNormal 또는 ModeView
 	menu         *Menu
 	worldMap     *HexMap
 	ui           *UI
@@ -25,7 +26,7 @@ func (g *Game) Update() error {
 
 	case SceneGame:
 		// 1. 카메라 업데이트 (드래그 로직 포함)
-		g.worldMap.UpdateCamera()
+		//g.worldMap.UpdateCamera()
 
 		// 2. [수정] 분리한 이벤트 핸들러 호출
 		g.HandleGameInput()

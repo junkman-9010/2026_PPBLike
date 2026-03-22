@@ -30,10 +30,19 @@ func (u *UI) drawTopUI(screen *ebiten.Image, g *Game) {
 	u.drawCenterTime(screen, g.worldMap)
 
 	// 4. 우측 메뉴 버튼 (중앙 구체 오른쪽 배치)
-	u.drawMenuButton(screen, centerX+55, 10, "VIEW", color.RGBA{150, 50, 50, 255})
+	// [수정] 현재 모드가 ModeView일 때 색상을 밝게 표시하여 활성화 상태를 나타냅니다.
+    viewBtnColor := color.RGBA{150, 50, 50, 255} // 기본 색상
+    if g.currentMode == ModeView {
+        viewBtnColor = color.RGBA{255, 80, 80, 255} // 활성화 시 더 밝은 빨간색
+    }
+
+    // 사용자님이 지정하신 함수와 좌표 그대로 사용
+    u.drawMenuButton(screen, centerX+55, 10, "VIEW", viewBtnColor)
+	
 	u.drawMenuButton(screen, centerX+120, 10, "STATS", color.RGBA{50, 100, 100, 255})
 	u.drawMenuButton(screen, centerX+185, 10, "INVT", color.RGBA{80, 80, 80, 255})
 	u.drawMenuButton(screen, centerX+250, 10, "DECK", color.RGBA{100, 80, 40, 255})
+	
 }
 
 // drawCenterTime: 중앙의 황금색 구체와 시간 정보를 그립니다.

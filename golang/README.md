@@ -5,6 +5,9 @@ GoLang을 이용해서 만드는 중.
 
 Gemini와 자체 GPT-OSS:20을 이용해서 만드는 중.
 
+# GoLang Version
+go version go1.20.7 windows/amd64
+
 # 추가 라이브러리가 있을시
 go mod vendor
 

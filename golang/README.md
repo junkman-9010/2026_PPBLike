@@ -12,10 +12,10 @@ go version go1.20.7 windows/amd64
 go mod vendor
 
 # 실행 시
-go run -mod=vendor .
+go run -mod=vendor ./main
 
 # 빌드 시 (exe 파일 생성)
-go build -mod=vendor -o pixel_game.exe .
+go build -mod=vendor -o pixel_game.exe ./main
 
 # 해야할일.
 todo

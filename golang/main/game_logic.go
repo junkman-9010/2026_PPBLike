@@ -30,7 +30,10 @@ func (g *Game) Update() error {
 
 		// 2. [수정] 분리한 이벤트 핸들러 호출
 		g.HandleGameInput()
-		g.worldMap.player.UpdateAnimation() // [추가] 플레이어 애니메이션 업데이트
+		
+		// 플레이어의 현재 위치(Current)를 목표 위치(Target)로 부드럽게 이동시킴
+        g.worldMap.player.TweenX.Update()
+        g.worldMap.player.TweenY.Update()
 
 		// 3. ESC 메뉴
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {

@@ -59,7 +59,7 @@ func NewHexMap(w, h int) *HexMap {
 // 현재 선택된 타일로 플레이어를 이동시키고 턴을 소모합니다.
 // 이동 후 시야 업데이트 및 몬스터 AI를 실행합니다.
 //
-func (m *HexMap) MovePlayerToSelected() {
+func (m *HexMap) MovePlayerToSelected() bool{
 	key := fmt.Sprintf("%d,%d", m.selectedQ, m.selectedR)
 	if _, ok := m.reachableTiles[key]; ok {
 		m.player.Q, m.player.R = m.selectedQ, m.selectedR
@@ -71,6 +71,32 @@ func (m *HexMap) MovePlayerToSelected() {
 			mon.UpdateAI(m)
 		}
 	}
+	
+	// 이동 확정
+    m.player.Q = m.selectedQ
+    m.player.R = m.selectedR
+	
+	// 2. [추가] 이동할 목적지의 실제 화면(픽셀) 좌표 계산
+    // HexRadius와 간격 계산식을 constants.go와 동일하게 맞춥니다.
+    spacingX := float32(HexRadius) * 1.5
+    spacingY := float32(HexRadius) * 1.73205
+    
+    targetX := float32(m.player.Q) * spacingX
+    targetY := float32(m.player.R) * spacingY
+    if m.player.Q%2 != 0 {
+        targetY += spacingY / 2
+    }
+
+    // 3. [핵심] Tween의 목표치(Target)를 설정합니다.
+    // 이제 p.TweenX.Update()가 호출될 때마다 Current가 이 Target으로 서서히 변합니다.
+    m.player.TweenX.SetTarget(targetX)
+    m.player.TweenY.SetTarget(targetY)
+
+    // 선택 해제 및 시야 업데이트
+    m.selectedQ = -1
+    m.selectedR = -1
+
+    return true
 }
 
 //

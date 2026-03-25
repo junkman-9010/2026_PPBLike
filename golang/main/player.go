@@ -37,7 +37,18 @@ type Player struct {
 	Color color.RGBA
 }
 
+// player.go 내 NewPlayer 함수 수정
 func NewPlayer(q, r int) *Player {
+	// --- 추가된 좌표 계산 로직 ---
+	spacingX := float32(HexRadius) * 1.5
+	spacingY := float32(HexRadius) * 1.73205
+	startX := float32(q) * spacingX
+	startY := float32(r) * spacingY
+	if q%2 != 0 {
+		startY += spacingY / 2
+	}
+	// --------------------------
+
 	return &Player{
 		Q: q, R: r,
 		HP: 100, MaxHP: 100,
@@ -48,11 +59,10 @@ func NewPlayer(q, r int) *Player {
 		Exp: 0, MaxExp: 100,
 		Level: 1,
 		Color: color.RGBA{255, 200, 0, 255},
-		TweenX: NewTween(startX, 0.1), // 속도 0.1 (숫자가 작을수록 묵직하게 이동)
+		TweenX: NewTween(startX, 0.1), // 이제 startX를 사용할 수 있습니다.
 		TweenY: NewTween(startY, 0.1),
 	}
 }
-
 //
 // (p *Player) ConsumeFood 턴 경과에 따라 식량을 소모하며, 식량이 부족할 경우 체력을 감소시킵니다.
 // @param amount 소모할 식량 양
@@ -97,17 +107,12 @@ func (p *Player) UpdateAnimation() {
 //
 func (p *Player) Draw(screen *ebiten.Image, offsetX, offsetY float32) {
 	// 헥사곤 좌표 -> 화면 좌표 변환 (map_system.go의 로직과 일치해야 함)
-	spacingX := float32(HexRadius) * 1.5
-	spacingY := float32(HexRadius) * 1.73205
-	
-	posX := float32(p.Q)*spacingX + offsetX
-	posY := float32(p.R)*spacingY + offsetY
-	if p.Q%2 != 0 {
-		posY += spacingY / 2
-	}
+	drawX := p.TweenX.Current + offsetX
+    drawY := p.TweenY.Current + offsetY
 
 	// 플레이어 캐릭터 본체 (원형)
-	vector.DrawFilledCircle(screen, posX, posY, float32(HexRadius)*0.6, p.Color, true)
+	vector.DrawFilledCircle(screen, drawX, drawY, float32(HexRadius)*0.6, p.Color, true)
 	// 외곽선 추가
-	vector.StrokeCircle(screen, posX, posY, float32(HexRadius)*0.6, 2, color.White, true)
+	vector.StrokeCircle(screen, drawX, drawY, float32(HexRadius)*0.6, 2, color.White, true)
 }
+

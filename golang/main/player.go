@@ -1,8 +1,7 @@
-/**
- * @file player.go
- * @brief 플레이어 캐릭터의 데이터 구조와 메서드를 정의합니다.
- */
- 
+//
+// player.go
+// 플레이어 캐릭터의 데이터 구조와 메서드를 정의합니다.
+// 
 package main
 
 import (
@@ -13,10 +12,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-/**
- * @struct Player
- * @brief 플레이어의 능력치 및 위치 정보를 담는 구조체입니다.
- */
+//
+// Player struct
+// brief 플레이어의 능력치 및 위치 정보를 담는 구조체입니다.
+//
 type Player struct {
 	Q, R int
 	
@@ -30,6 +29,10 @@ type Player struct {
 	Stamina, MaxStamina int
 	Exp, MaxExp         int
 	Level               int
+	
+	// 애니메이션을 위한 트윈 객체
+	TweenX *Tween
+	TweenY *Tween
 
 	Color color.RGBA
 }
@@ -45,14 +48,15 @@ func NewPlayer(q, r int) *Player {
 		Exp: 0, MaxExp: 100,
 		Level: 1,
 		Color: color.RGBA{255, 200, 0, 255},
+		TweenX: NewTween(startX, 0.1), // 속도 0.1 (숫자가 작을수록 묵직하게 이동)
+		TweenY: NewTween(startY, 0.1),
 	}
 }
 
-/**
- * @fn (p *Player) ConsumeFood
- * @brief 턴 경과에 따라 식량을 소모하며, 식량이 부족할 경우 체력을 감소시킵니다.
- * @param amount 소모할 식량 양
- */
+//
+// (p *Player) ConsumeFood 턴 경과에 따라 식량을 소모하며, 식량이 부족할 경우 체력을 감소시킵니다.
+// @param amount 소모할 식량 양
+//
 func (p *Player) ConsumeFood(amount int) {
 	if p.Food > 0 {
 		p.Food -= amount
@@ -79,14 +83,18 @@ func (p *Player) LevelUp() {
 	p.MP = p.MaxMP
 }
 
+// [추가] 매 프레임 위치를 업데이트하는 함수
+func (p *Player) UpdateAnimation() {
+	p.TweenX.Update()
+	p.TweenY.Update()
+}
 
-/**
- * @fn (p *Player) Draw
- * @brief 플레이어를 화면에 렌더링합니다.
- * @param screen 렌더링 타겟 이미지
- * @param offsetX 카메라 X 오프셋
- * @param offsetY 카메라 Y 오프셋
- */
+//
+// (p *Player) Draw 플레이어를 화면에 렌더링합니다.
+// screen 렌더링 타겟 이미지
+// offsetX 카메라 X 오프셋
+// offsetY 카메라 Y 오프셋
+//
 func (p *Player) Draw(screen *ebiten.Image, offsetX, offsetY float32) {
 	// 헥사곤 좌표 -> 화면 좌표 변환 (map_system.go의 로직과 일치해야 함)
 	spacingX := float32(HexRadius) * 1.5

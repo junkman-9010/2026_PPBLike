@@ -62,6 +62,8 @@ type HexMap struct {
 	isDragging             bool
 	lastMouseX, lastMouseY int
 	TurnCount              int
+	
+	highlightPulse *Pulse
 }
 
 // drawTile은 개별 육각형 타일을 화면에 그립니다.
@@ -119,56 +121,73 @@ func (m *HexMap) drawHexShadow(screen *ebiten.Image, x, y, radius float32, clr c
 	screen.DrawTriangles(vs, is, subImage, &ebiten.DrawTrianglesOptions{})
 }
 
+// isOffScreen은 주어진 좌표가 화면 가시 영역 밖에 있는지 확인합니다.
+func (m *HexMap) isOffScreen(x, y, padding float32) bool {
+	return x < -padding || x > float32(ScreenWidth)+padding ||
+		y < -padding || y > float32(ScreenHeight)+padding
+}
 
 // Draw 메서드는 현재 화면에 보이는 모든 타일과 객체를
 // 렌더링합니다. 화면 밖 타일은 그리지 않아 성능을 최적화합니다.
 // 타일이 밝혀졌다면 기본 색상과 테두리를, 시야에 없으면 그림자를,
 // reachableTiles 에 있는 타일은 노란색 테두리로, 선택된 타일은 빨간색 테두리로 표시합니다.
 // 마지막으로 몬스터와 플레이어를 현재 시야에 따라 그립니다.
-func (m *HexMap) Draw(screen *ebiten.Image) {
+func (m *HexMap) Draw(screen *ebiten.Image, currentMode int) {
 	spacingX := float32(HexRadius) * 1.5
 	spacingY := float32(HexRadius) * 1.73205
-	padding := float32(HexRadius)
+	padding := float32(HexRadius) * 2
 
-	// 1. 지형 및 테두리 그리기
-	for r := 0; r < m.height; r++ {
-		for q := 0; q < m.width; q++ {
-			posX, posY := m.getTileScreenPos(q, r, spacingX, spacingY)
+	mx, my := ebiten.CursorPosition()
+    hoverQ, hoverR := m.ScreenToTile(float32(mx), float32(my))
+
+    // 1단계: 모든 지형과 노란색(이동 가능) 테두리를 먼저 그립니다.
+    for r := 0; r < m.height; r++ {
+        for q := 0; q < m.width; q++ {
+            posX, posY := m.getTileScreenPos(q, r, spacingX, spacingY)
+            if m.isOffScreen(posX, posY, padding) { continue }
+
+            key := fmt.Sprintf("%d,%d", q, r)
+            if m.revealedTiles[key] {
+                m.drawTile(screen, posX, posY, HexRadius, m.tiles[r][q])
+                m.drawHexOutline(screen, posX, posY, HexRadius, color.RGBA{0, 0, 0, 50}, 1)
+
+                // 노란색 테두리는 여기서 미리 다 그려둡니다.
+                if currentMode == ModeNormal {
+                    if _, reachable := m.reachableTiles[key]; reachable {
+                        m.drawHexOutline(screen, posX, posY, HexRadius, color.RGBA{255, 255, 0, 150}, 3)
+                    }
+                }
+
+                if !m.visibleTiles[key] {
+                    m.drawHexShadow(screen, posX, posY, HexRadius, color.RGBA{0, 0, 0, 150})
+                }
+            }
+        }
+    }
+
+    // 2단계: 모든 타일이 그려진 "위에" 빨간색 하이라이트만 단독으로 덧씌웁니다.
+    // 마우스가 가리키는 타일(hoverQ, hoverR)이 유효한지 확인 후 그립니다.
+    if hoverQ >= 0 && hoverQ < m.width && hoverR >= 0 && hoverR < m.height {
+        key := fmt.Sprintf("%d,%d", hoverQ, hoverR)
+        
+        // 렌더링 조건 체크
+        shouldDrawRed := false
+        if currentMode == ModeView {
+            shouldDrawRed = true // View 모드에선 무조건
+        } else if _, reachable := m.reachableTiles[key]; reachable {
+            shouldDrawRed = true // Normal 모드에선 이동 가능 지역일 때만
+        }
+
+        // 2. Draw 함수 내부
+		if shouldDrawRed {
+			m.highlightPulse.Update() // 애니메이션 값 업데이트
+			posX, posY := m.getTileScreenPos(hoverQ, hoverR, spacingX, spacingY)
 			
-			// 화면 밖 타일은 그리지 않음 (최적화)
-			if posX < -padding || posX > float32(ScreenWidth)+padding || 
-			   posY < -padding || posY > float32(ScreenHeight)+padding {
-				continue
-			}
-
-			key := fmt.Sprintf("%d,%d", q, r)
-			// 한 번이라도 밝혀진 타일만 그림
-			if m.revealedTiles[key] {
-				m.drawTile(screen, posX, posY, HexRadius, m.tiles[r][q])
-				
-				// [핵심] 테두리가 사라졌다면 이 부분이 확실히 있어야 합니다.
-				// 타일 기본 테두리 (검은색, 두께 1)
-				m.drawHexOutline(screen, posX, posY, HexRadius, color.RGBA{0, 0, 0, 50}, 1)
-
-				// 현재 시야에 없는 곳은 어둡게 처리
-				if !m.visibleTiles[key] {
-					m.drawHexShadow(screen, posX, posY, HexRadius, color.RGBA{0, 0, 0, 150})
-				}
-			}
+			// 기본 두께 5에 Pulse 값(±2)을 더해 3~7px 사이로 계속 변하게 함
+			dynamicWidth := 5 + m.highlightPulse.Value
+			m.drawHexOutline(screen, posX, posY, HexRadius, color.RGBA{255, 0, 0, 255}, dynamicWidth)
 		}
-	}
-
-	// 2. 이동 가능 범위 하이라이트 (노란색 테두리)
-	for key := range m.reachableTiles {
-		var q, r int
-		fmt.Sscanf(key, "%d,%d", &q, &r)
-		posX, posY := m.getTileScreenPos(q, r, spacingX, spacingY)
-		m.drawHexOutline(screen, posX, posY, HexRadius, color.RGBA{255, 255, 0, 255}, 2)
-	}
-
-	// 3. 선택된 타일 표시 (빨간색 테두리)
-	selX, selY := m.getTileScreenPos(m.selectedQ, m.selectedR, spacingX, spacingY)
-	m.drawHexOutline(screen, selX, selY, HexRadius, color.RGBA{255, 50, 50, 255}, 3)
+    }
 	
 	// 4. 오브젝트 레이어
 	for _, mon := range m.monsters {
@@ -176,5 +195,6 @@ func (m *HexMap) Draw(screen *ebiten.Image) {
 			mon.Draw(screen, m.offsetX, m.offsetY)
 		}
 	}
+	
 	m.player.Draw(screen, m.offsetX, m.offsetY)
 }

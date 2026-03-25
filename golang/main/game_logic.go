@@ -30,6 +30,7 @@ func (g *Game) Update() error {
 
 		// 2. [수정] 분리한 이벤트 핸들러 호출
 		g.HandleGameInput()
+		g.worldMap.player.UpdateAnimation() // [추가] 플레이어 애니메이션 업데이트
 
 		// 3. ESC 메뉴
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
@@ -37,18 +38,6 @@ func (g *Game) Update() error {
 		}
 	}
 	return nil
-}
-
-func (g *Game) Draw(screen *ebiten.Image) {
-	switch g.currentScene {
-	case SceneMenu:
-		g.menu.Draw(screen)
-	case SceneGame:
-		// 맵과 엔티티 그리기
-		g.worldMap.Draw(screen)
-		// UI 레이어 그리기 (항상 최상단)
-		g.ui.Draw(screen, g)
-	}
 }
 
 // handleGameInput: 인게임 내에서의 클릭 및 상호작용 로직 분리
@@ -62,5 +51,18 @@ func (g *Game) handleGameInput() {
 	// 스페이스바: 선택한 좌표로 플레이어 이동 및 턴 소모
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		g.worldMap.MovePlayerToSelected()
+	}
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	switch g.currentScene {
+	case SceneMenu:
+		g.menu.Draw(screen)
+	case SceneGame:
+		// 맵과 엔티티 그리기
+		//g.worldMap.Draw(screen)
+		g.worldMap.Draw(screen, g.currentMode)
+		// UI 레이어 그리기 (항상 최상단)
+		g.ui.Draw(screen, g)
 	}
 }

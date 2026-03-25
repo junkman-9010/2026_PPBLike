@@ -1,8 +1,14 @@
-/**
- * @file map_system.go
- * @brief 헥사곤 맵의 시스템 로직(생성, 시야, 이동 계산, 카메라)을 구현합니다.
- */
- 
+// map_system.go
+//
+// 헥사곤 기반 게임 맵의 핵심 로직을 구현한 파일입니다.
+// 전체 게임 흐름(맵 생성, 시야 계산, 이동, 카메라 조작 등)을 담당하며,
+// 현재 플레이어와 몬스터의 행동을 제어합니다.
+//
+// godoc 형식의 한글 주석을 사용하여 각 함수·구조체·필드에 대한 설명을 추가했습니다.
+// 이 파일을 별도 패키지로 분리하고 싶다면
+// `package map` 으로 선언하고 필요한 부분만 export(대문자)하면 됩니다.
+// 현재는 `package main` 으로 작성해 두었습니다.
+//
 package main
 
 import (
@@ -15,13 +21,14 @@ import (
 	"github.com/ojrac/opensimplex-go"
 )
 
-/**
- * @fn NewHexMap
- * @brief 새로운 헥사곤 맵 인스턴스를 생성하고 초기화합니다.
- * @param w 맵의 가로 너비 (타일 수)
- * @param h 맵의 세로 높이 (타일 수)
- * @return 초기화된 HexMap 구조체 포인터
- */
+
+//
+// NewHexMap
+// 새로운 헥사곤 맵 인스턴스를 생성하고 초기화합니다.
+// w 맵의 가로 크기(열 수)
+// h 맵의 세로 크기(행 수)
+// 초기화된 HexMap 포인터
+//
 func NewHexMap(w, h int) *HexMap {
 	m := &HexMap{
 		width:          w,
@@ -31,6 +38,8 @@ func NewHexMap(w, h int) *HexMap {
 		visibleTiles:   make(map[string]bool),
 		revealedTiles:  make(map[string]bool),
 		reachableTiles: make(map[string]int),
+		// [추가] Pulse 객체 생성 (속도 0.1, 범위 2.0px)
+		highlightPulse: NewPulse(0.1, 2.0),
 	}
 	m.generateTerrain()
 	
@@ -41,14 +50,15 @@ func NewHexMap(w, h int) *HexMap {
 	m.UpdateVision(3)
 	m.CalculateReachable(2)
 	m.CenterCameraOnPlayer()
+	
 	return m
 }
 
-/**
- * @fn MovePlayerToSelected
- * @brief 현재 선택된 타일로 플레이어를 이동시키고 턴을 소모합니다.
- * @details 이동 후 시야 업데이트 및 몬스터 AI를 실행합니다.
- */
+//
+// MovePlayerToSelected
+// 현재 선택된 타일로 플레이어를 이동시키고 턴을 소모합니다.
+// 이동 후 시야 업데이트 및 몬스터 AI를 실행합니다.
+//
 func (m *HexMap) MovePlayerToSelected() {
 	key := fmt.Sprintf("%d,%d", m.selectedQ, m.selectedR)
 	if _, ok := m.reachableTiles[key]; ok {
@@ -63,10 +73,10 @@ func (m *HexMap) MovePlayerToSelected() {
 	}
 }
 
-/**
- * @fn SpawnMonsters
- * @brief 맵 내에 바다가 아닌 안전한 스폰 지점을 찾아 플레이어를 배치합니다.
- */
+//
+// SpawnMonsters
+// 맵 내에 바다가 아닌 안전한 스폰 지점을 찾아 플레이어를 배치합니다.
+//
 func (m *HexMap) SpawnMonsters(count int) {
 	for i := 0; i < count; i++ {
 		mq, mr := rand.Intn(m.width), rand.Intn(m.height)
@@ -90,11 +100,11 @@ func (m *HexMap) CalculateMonsterVision(mon *Monster) map[string]bool {
 	return v
 }
 
-/**
- * @fn GetTimeContext
- * @brief 현재 턴 수에 따른 시간 단계(Step)와 시간(Hour)을 반환합니다.
- * @return timeStep 시간 단계 (0:아침, 1:오후, 2:저녁, 3:밤), hour 24시간제 시간
- */
+//
+// GetTimeContext
+// 현재 턴 수에 따른 시간 단계(Step)와 시간(Hour)을 반환합니다.
+// timeStep 시간 단계 (0:아침, 1:오후, 2:저녁, 3:밤), hour 24시간제 시간
+//
 func (m *HexMap) GetTimeContext() (int, int) { // 반환 타입을 (int, int)로 설정
     hour := (m.TurnCount / 6) % 24
     
@@ -113,7 +123,7 @@ func (m *HexMap) GetTimeContext() (int, int) { // 반환 타입을 (int, int)로
     return timeStep, hour
 }
 
-// 5. 지형 생성 로직 (noise 필드 사용)
+// generateTiles 은 opensimplex 노이즈를 이용해 맵 타일을 생성합니다.
 func (m *HexMap) generateTerrain() {
 	m.tiles = make([][]Tile, m.height)
 	for r := 0; r < m.height; r++ {
@@ -209,8 +219,8 @@ func (m *HexMap) GetNeighbors(q, r int) [][2]int {
 
 
 /**
- * @fn CenterCameraOnPlayer
- * @brief 카메라의 초점을 플레이어 캐릭터의 중앙으로 이동시킵니다.
+// CenterCameraOnPlayer
+// 카메라의 초점을 플레이어 캐릭터의 중앙으로 이동시킵니다.
  */
 func (m *HexMap) CenterCameraOnPlayer() {
 	spacingX := float32(HexRadius) * 1.5
@@ -222,6 +232,9 @@ func (m *HexMap) CenterCameraOnPlayer() {
 	m.offsetY = float32(ScreenHeight)/2 - py
 }
 
+// GetTileScreenPos 은 헥사곤 좌표(q, r)를 화면 픽셀 좌표로 변환합니다.
+// sX, sY: 헥사곤 간격( HexRadius 기반)
+// 반환값: pX, pY
 func (m *HexMap) getTileScreenPos(q, r int, sX, sY float32) (float32, float32) {
 	pX := float32(q)*sX + m.offsetX
 	pY := float32(r)*sY + m.offsetY
@@ -229,10 +242,14 @@ func (m *HexMap) getTileScreenPos(q, r int, sX, sY float32) (float32, float32) {
 	return pX, pY
 }
 
+// isOutsideScreen 은 주어진 좌표가 화면 밖에 있는지 여부를 판단합니다.
+// x, y: 화면 좌표, padding: 허용 여백
 func (m *HexMap) isOutsideScreen(x, y, padding float32) bool {
 	return x < -padding || x > float32(ScreenWidth)+padding || y < -padding || y > float32(ScreenHeight)+padding
 }
 
+// UpdateCamera 은 마우스 입력에 따라 카메라를 이동시킵니다.
+// 왼쪽 버튼이 눌리면 드래그를 시작하고, 놓으면 종료합니다.
 func (m *HexMap) UpdateCamera() {
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		mx, my := ebiten.CursorPosition()
@@ -247,13 +264,10 @@ func (m *HexMap) UpdateCamera() {
 	} else { m.isDragging = false }
 }
 
-/**
- * @fn ScreenToTile
- * @brief 화면의 픽셀 좌표를 헥사곤 그리드 좌표(Q, R)로 변환합니다.
- * @param x 화면 X 좌표
- * @param y 화면 Y 좌표
- * @return q 헥사곤 열 좌표, r 헥사곤 행 좌표
- */
+// ScreenToTile 은 화면 픽셀 좌표를 헥사곤 그리드 좌표(Q, R)로 변환합니다.
+// x: 화면 X 좌표, y: 화면 Y 좌표
+// 반환값: q(열), r(행)
+// 범위를 벗어나면 (-1, -1) 반환
 func (m *HexMap) ScreenToTile(x, y float32) (int, int) {
 	// 카메라 오프셋 보정
 	worldX := x - m.offsetX
@@ -280,10 +294,9 @@ func (m *HexMap) ScreenToTile(x, y float32) (int, int) {
 	return q, r
 }
 
-/**
- * @fn findSafeSpawnPoint
- * @brief 맵 내에 바다가 아닌 안전한 스폰 지점을 찾아 플레이어를 배치합니다.
- */
+// findSafeSpawnPoint 은 맵의 중앙부를 기준으로 가장 먼저 발견되는
+// 바다(Ocean)와 산(Mountain) 이외의 육지에 플레이어를 배치합니다.
+// 플레이어가 이미 존재하는 경우 위치를 갱신합니다.
 func (m *HexMap) findSafeSpawnPoint() {
 	// 맵의 중앙부부터 탐색하여 가장 먼저 발견되는 육지(바다가 아닌 곳)에 배치
 	for r := 0; r < m.height; r++ {

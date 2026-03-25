@@ -5,7 +5,7 @@ import "image/color"
 const (
 	ScreenWidth  = 1280
 	ScreenHeight = 720
-	HexRadius    = 80
+	HexRadius    = 60
 )
 
 type Scene int

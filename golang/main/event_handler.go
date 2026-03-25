@@ -1,8 +1,7 @@
-/**
- * @file event_handler.go
- * @brief 게임 내 모든 사용자 입력(마우스, 키보드)을 처리하는 핸들러입니다.
- */
- 
+//
+// event_handler.go
+// 게임 내 모든 사용자 입력(마우스, 키보드)을 처리하는 핸들러입니다.
+//
 package main
 
 import (
@@ -10,22 +9,22 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-/**
- * @fn (g *Game) HandleGameInput
- * @brief 게임 플레이 중 발생하는 모든 입력을 관리합니다.
- * @details ModeView일 때는 카메라 조작을, ModeNormal일 때는 캐릭터 조작을 담당합니다.
- * @param g Game 구조체의 포인터
- */
+//
+// (g *Game) HandleGameInput
+// 게임 플레이 중 발생하는 모든 입력을 관리합니다.
+// ModeView일 때는 카메라 조작을, ModeNormal일 때는 캐릭터 조작을 담당합니다.
+// g Game 구조체의 포인터
+//
 func (g *Game) HandleGameInput() {
 	
 	m := g.worldMap
     
 	centerX := float32(ScreenWidth) / 2
 	
-	/**
-	 * @section VIEW_MODE 관찰 모드 로직
-     * 드래그 활성화 및 모드 해제 조건 체크
-     */
+	//
+	// VIEW_MODE 관찰 모드 로직
+	// 드래그 활성화 및 모드 해제 조건 체크
+	//
     if g.currentMode == ModeView {
         m.UpdateCamera() // 드래그 활성화
 
@@ -40,10 +39,10 @@ func (g *Game) HandleGameInput() {
         return 
     }
 
-	/**
-	 * @section NORMAL_MODE 일반 모드 로직
-     * 마우스 클릭을 통한 버튼 상호작용 및 캐릭터 이동
-     */
+	//
+	// NORMAL_MODE 일반 모드 로직
+	// 마우스 클릭을 통한 버튼 상호작용 및 캐릭터 이동
+	//
     if inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft) {
         cx, cy := ebiten.CursorPosition()
         fcx, fcy := float32(cx), float32(cy)
@@ -64,10 +63,27 @@ func (g *Game) HandleGameInput() {
             }
         }
     }
+	
+	if m.MovePlayer(targetQ, targetR) {
+		// 1. 이동에 성공했다면, 새로운 타일의 실제 '세계 좌표'를 가져옵니다.
+		// map_system.go에 정의된 getTileScreenPos를 활용하거나 새로 계산합니다.
+		spacingX := float32(40) * 1.5
+		spacingY := float32(40) * 1.73205
+		newX := float32(targetQ) * spacingX
+		newY := float32(targetR) * spacingY
+		if targetQ%2 != 0 {
+			newY += spacingY / 2
+		}
 
-	/**
-	 * @brief 스페이스바 입력을 통한 턴 경과 처리
-	 */
+		// 2. 트윈의 목표값을 갱신합니다. 이제 플레이어는 이곳을 향해 미끄러집니다.
+		p.TweenX.SetTarget(newX)
+		p.TweenY.SetTarget(newY)
+
+		m.UpdateVisibility()
+		m.TurnCount++
+	}
+
+	// 스페이스바 입력을 통한 턴 경과 처리
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		m.TurnCount++
 		m.UpdateVision(3)

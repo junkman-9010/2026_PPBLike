@@ -37,7 +37,7 @@ func (g *Game) HandleGameInput() {
 		q, r := m.ScreenToTile(fcx, fcy)
 		if q >= 0 && q < m.width && r >= 0 && r < m.height {
 			// 이미 선택된 타일을 다시 클릭하면 이동
-				if m.selectedQ == q && m.selectedR == r {
+			if m.selectedQ == q && m.selectedR == r {
 				// 1. 함수를 먼저 실행합니다.
 				m.MovePlayerToSelected() 
 				

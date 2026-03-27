@@ -11,6 +11,8 @@ type Resolution struct {
 
 // 지원하는 해상도 리스트
 var SupportedResolutions = []Resolution{
+	{640, 360,  "640x360 (16:9)"},
+	{850, 480,  "852x480 (16:9)"},
 	{1280, 720,  "1280x720 (16:9)"},
 	{1600, 900,  "1600x900 (16:9)"},
 	{1920, 1080, "1920x1080 (16:9)"},
@@ -20,8 +22,8 @@ var SupportedResolutions = []Resolution{
 var (
 	CurrentResIndex = 0
 	// 초기화를 위해 변수로 선언 (기존 상수를 대체)
-	ScreenWidth  = SupportedResolutions[0].Width
-	ScreenHeight = SupportedResolutions[0].Height
+	ScreenWidth  = SupportedResolutions[2].Width
+	ScreenHeight = SupportedResolutions[2].Height
 )
 
 const (

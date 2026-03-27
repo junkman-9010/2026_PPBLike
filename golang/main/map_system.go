@@ -295,29 +295,19 @@ func (m *HexMap) UpdateCamera() {
 // 반환값: q(열), r(행)
 // 범위를 벗어나면 (-1, -1) 반환
 func (m *HexMap) ScreenToTile(x, y float32) (int, int) {
-	// 카메라 오프셋 보정
-	worldX := x - m.offsetX
-	worldY := y - m.offsetY
+    // 해상도에 따른 동적 반경 계산 (예: 높이의 8%)
+    dynamicRadius := float32(ScreenHeight) * 0.08 
 
-	// 헥사곤 간격 계산 (constants.go의 HexRadius 기준)
-	spacingX := float32(HexRadius) * 1.5
-	spacingY := float32(HexRadius) * 1.73205
+    worldX := x - m.offsetX
+    worldY := y - m.offsetY
 
-	// 대략적인 그리드 위치 계산
-	q := int(math.Round(float64(worldX / spacingX)))
-	
-	adjY := worldY
-	if q%2 != 0 {
-		adjY -= spacingY / 2
-	}
-	r := int(math.Round(float64(adjY / spacingY)))
+    spacingX := dynamicRadius * 1.5
+    spacingY := dynamicRadius * 1.73205
 
-	// 맵 범위 체크
-	if q < 0 || q >= m.width || r < 0 || r >= m.height {
-		return -1, -1
-	}
-
-	return q, r
+    q := int(math.Round(float64(worldX / spacingX)))
+    r := int(math.Round(float64(worldY / spacingY)))
+    
+    return q, r
 }
 
 // findSafeSpawnPoint 은 맵의 중앙부를 기준으로 가장 먼저 발견되는

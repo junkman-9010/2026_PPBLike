@@ -13,6 +13,8 @@ type Game struct {
 	menu         *Menu
 	worldMap     *HexMap
 	ui           *UI
+	
+	optionUI *OptionUI // 추가
 }
 
 func (g *Game) Update() error {
@@ -39,6 +41,10 @@ func (g *Game) Update() error {
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			g.currentScene = SceneMenu
 		}
+	
+	case SceneOption:
+		if g.optionUI == nil { g.optionUI = NewOptionUI() } // 초기화
+		g.optionUI.Update(g)
 	}
 	return nil
 }
@@ -67,5 +73,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.worldMap.Draw(screen, g.currentMode)
 		// UI 레이어 그리기 (항상 최상단)
 		g.ui.Draw(screen, g)
+	case SceneOption:
+        if g.optionUI != nil {
+            g.optionUI.Draw(screen)
+        }
 	}
 }

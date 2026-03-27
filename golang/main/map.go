@@ -28,12 +28,6 @@ func init() {
 	subImage = whiteImage.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
 }
 
-// TerrainStats는 각 지형 타입이 갖는 이동 비용과 시야 비용을 정의합니다.
-type TerrainStats struct {
-	MoveCost   int
-	VisionCost int
-}
-
 // Tile은 헥사곤 맵 상의 한 타일을 나타냅니다.
 // Q, R 좌표는 엑스포넌트(좌표계) 기반이며, Terrain 은 지형 타입,
 // HasVillage 은 해당 타일에 마을이 있는지를 표시합니다.

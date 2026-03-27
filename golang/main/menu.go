@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"image/color"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -35,6 +37,40 @@ func (m *Menu) Update() Scene {
 		}
 	}
 	return SceneMenu
+}
+
+// 별도의 OptionUpdate 함수 (Game.Update에서 SceneOption일 때 호출)
+func (g *Game) HandleOptionInput() {
+    // 좌우 키로 해상도 변경
+    if inpututil.IsKeyJustPressed(ebiten.KeyLeft) {
+        idx := (CurrentResIndex - 1 + len(SupportedResolutions)) % len(SupportedResolutions)
+        UpdateConfigValue(idx)
+        ebiten.SetWindowSize(SupportedResolutions[idx].Width, SupportedResolutions[idx].Height)
+    }
+    if inpututil.IsKeyJustPressed(ebiten.KeyRight) {
+        idx := (CurrentResIndex + 1) % len(SupportedResolutions)
+        UpdateConfigValue(idx)
+        ebiten.SetWindowSize(SupportedResolutions[idx].Width, SupportedResolutions[idx].Height)
+    }
+
+    // ESC로 메인 메뉴 복귀
+    if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+        g.currentScene = SceneMenu
+    }
+}
+
+func (m *Menu) DrawOptions(screen *ebiten.Image) {
+	screen.Fill(color.RGBA{20, 20, 30, 255}) // 옵션 배경색 (약간 진한 남색)
+
+	// 안내 문구 출력
+	ebitenutil.DebugPrintAt(screen, "--- OPTIONS ---", ScreenWidth/2-50, ScreenHeight/2-60)
+	
+	// 현재 해상도 표시
+	resText := fmt.Sprintf("Resolution: < %s >", SupportedResolutions[CurrentResIndex].Name)
+	ebitenutil.DebugPrintAt(screen, resText, ScreenWidth/2-100, ScreenHeight/2)
+
+	ebitenutil.DebugPrintAt(screen, "Press LEFT/RIGHT to Change", ScreenWidth/2-100, ScreenHeight/2+40)
+	ebitenutil.DebugPrintAt(screen, "Press ENTER or ESC to Save & Back", ScreenWidth/2-110, ScreenHeight/2+80)
 }
 
 func (m *Menu) Draw(screen *ebiten.Image) {

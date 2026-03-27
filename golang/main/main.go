@@ -14,6 +14,14 @@ import (
 // 게임 루프를 시작합니다.
 // 오류가 발생하면 로그를 기록하고 프로그램을 종료합니다.
 func main() {
+	
+	// 1. 설정 파일 먼저 로드
+    LoadConfig() 
+
+    // 2. 로드된 ScreenWidth/Height로 윈도우 설정
+    ebiten.SetWindowSize(ScreenWidth, ScreenHeight)
+    ebiten.SetWindowTitle("Pixel Princess Blitz")
+	
     // ScreenWidth와 ScreenHeight를 이용해 윈도우 크기를 설정합니다.
     ebiten.SetWindowSize(ScreenWidth, ScreenHeight)
     ebiten.SetWindowTitle("Pixel Princess Blitz")
